@@ -22,12 +22,12 @@ $(TEST_NAME): test_main.o subtraction.o
 # --- Object File Compilation ---
 
 # Rule to compile subtraction.c into subtraction.o
-# Dependency is subtraction.h
+# Dependency: subtraction.h
 subtraction.o: subtraction.c subtraction.h
 	$(CC) $(CFLAGS) -c subtraction.c
 
 # Rule to compile test_main.c into test_main.o
-# Dependency is subtraction.h
+# Dependency: subtraction.h
 test_main.o: test_main.c subtraction.h
 	$(CC) $(CFLAGS) -c test_main.c
 
