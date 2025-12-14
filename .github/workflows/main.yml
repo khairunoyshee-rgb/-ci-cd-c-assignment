@@ -1,0 +1,82 @@
+name: CI/CD C-Assignment Pipeline
+
+# Pipeline will run on push to main branch or when a pull request is opened
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Define the secret variable DEPLOY_API_KEY from GitHub's secrets management
+env:
+  DEPLOY_API_KEY: ${{ secrets.DEPLOY_API_KEY }}
+
+jobs:
+  # Job 1: Combines Source, Build, and Package/Artifact stages
+  build_and_package:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 1. Source - Checkout the source code
+        # MANDATORY TASK: Checkout the source code from your Git repository.
+        uses: actions/checkout@v4
+      
+      - name: Install build tools (GCC and Make)
+        run: sudo apt-get update && sudo apt-get install gcc make -y
+      
+      - name: 2. Build - Compile the C application
+        # MANDATORY TASK: Compile and generate the deployable artifact (app_artifact)
+        run: make app_artifact
+        
+      - name: Create deployable artifact (ZIP archive)
+        # Packages the compiled binary for artifact storage
+        run: zip -r artifact.zip app_artifact
+        
+      - name: 4. Package/Artifact - Upload build artifact
+        # MANDATORY TASK: Upload the exact build artifact to CI/CD storage.
+        uses: actions/upload-artifact@v4
+        with:
+          name: compiled-c-artifact
+          path: artifact.zip
+          retention-days: 1
+          
+  # Job 2: Test Stage
+  run_tests:
+    needs: build_and_package # Dependency: Ensures Build/Package succeeds first
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout the code (needed for running 'make')
+        uses: actions/checkout@v4
+
+      - name: Install build tools (GCC and Make)
+        run: sudo apt-get install gcc make -y
+        
+      - name: 3. Test - Compile and Run automated unit tests
+        # MANDATORY TASK: Run automated unit tests. Exits with 1 on failure.
+        run: |
+          make unit_tests
+          ./unit_tests
+        
+  # Job 3: Simulated Deploy Stage
+  simulated_deploy:
+    needs: run_tests # Dependency: Ensures Test succeeds first
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download the build artifact
+        # MANDATORY TASK: Download the artifact created in the previous stage. (Artifact Reuse)
+        uses: actions/download-artifact@v4
+        with:
+          name: compiled-c-artifact
+          path: ./downloaded-build
+      
+      - name: 5. Simulated Deploy - Use and log the masked secret
+        # MANDATORY TASK: Use a masked secret (DEPLOY_API_KEY) and print it securely.
+        run: |
+          echo "Downloaded artifact confirmed for deployment."
+          ls -l ./downloaded-build/
+          echo "Simulated Deployment using securely masked API Key: $DEPLOY_API_KEY"
+          echo "Deployment process finished successfully."
